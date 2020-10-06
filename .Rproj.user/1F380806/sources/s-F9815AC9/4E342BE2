@@ -1,0 +1,25 @@
+{
+    "collab_server" : "",
+    "contents" : "",
+    "created" : 1601974000386.000,
+    "dirty" : true,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "4E342BE2",
+    "lastKnownWriteTime" : 1601973997,
+    "last_content_update" : 1601974007127,
+    "path" : "~/Desktop/share/图片作品/qqq/2020-Canadian-federal-election-survey.Rmd",
+    "project_path" : null,
+    "properties" : {
+        "cursorPosition" : "230,0",
+        "scrollLine" : "0"
+    },
+    "read_only" : false,
+    "read_only_alternatives" : [
+    ],
+    "relative_order" : 3,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_markdown"
+}

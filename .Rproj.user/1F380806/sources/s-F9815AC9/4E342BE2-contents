@@ -1,0 +1,230 @@
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Executive summary
+
+On behalf of the Canadian Conservative Party, we conduct this survey on selected Canadian residents who are eligible to vote on the 44th Canadian federal election. This survey has been done pre vote to understand in detail who are the supporters of Conservative. Statistical analysis has been carried out to interpret the survey result. We managed to reveal some interesting age and geographical patterns of our supporters by asking them some general personal questions in the survey. We also checked the relationship between voter's gender, education, salary, and the Party voter will vote for on the election day. However there isn't anything glaring that helps us to deduce properties between them. Based on our overall finding, we are confident that the Conservative Party will benefit from riding in Alberta area. Note that the participation of the survey is not mandatory and respondents are rewarded for their participation. The study result will directly contribute to the 44th election campaign of the Conservative Party.
+
+# Introduction
+The sample of residents surveyed is chosen from the entire Canadian population. The goal of the survey is to describe not the particular sample but the entire population of the voters. We will begin our study with the explanation of our survey methodology and how we proceeded to reach out the respondents. There will be a short paragraph on the estimation of the total cost of conducting this survey. Then, we will look at the survey response by question and our interest. In order to understand the study, lightweight of knowledge on statistics is a prerequisite but we won't expand our analysis beyond general statistical common sense. Finally, we will discuss briefly the drawback, or things that can be improved for this study in the future. At the end of the document, we attached the content of the survey that we've designed.
+
+# Survey methodology
+
+We adopt a successive independent samples studies. The main idea of choosing this methodology is due to the fact the survey is sent by post and respondents will choose to complete or not the survey by independent decision. This means the observations(survey responses) are collected over multiple time points.
+The population we are targeting is composed by residents from the top 10 largest Canadian provinces. Samples are randomly selected from each of these 10 provinces and the number of draw are proportion to the population size by province. The total size of the sample is 10000, which is both achievable and large enough to compile data analysis report from the survey results. We think the population from the 10 largest Canadian provinces is representative to the whole population:
+
+\newpage
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(knitr)
+population <- structure(list(Province = c("Ontario", "Quebec", "British Columbia", 
+"Alberta", "Manitoba", "Saskatchewan", "Nova Scotia", "New Brunswick", 
+"Newfoundland and Labrador", "Prince Edward Island"), `Population in 2019` = c(14501100, 
+8443200, 5048000, 4389000, 1367000, 1178200, 963500, 773100, 
+523900, 155300), `Number of samples` = c(3883, 2261, 1351, 1175, 
+366, 315, 258, 207, 140, 41)), row.names = c(NA, -10L), class = c("tbl_df", 
+"tbl", "data.frame"))
+kable(population)
+```
+
+A survey poster will be sent to each of the selected resident lives at the address which has been collected from the council office for that province. We've designed the survey in Google form and include it inside the poster so the resident can choose to complete the survey by following the procedure explained in the poster, or totally ignore it. In order to get a high response rate, we will create a raffle of which the prize is 100\$ for those who participate the survey. We estimate a 70% response rate to the survey. And the total cost of the survey campaign will cost about 1500\$ including 400\$ to recruit graphical designer for poster design, 1000$ to print 10000 A4 posters, and the price money of the raffle.
+
+As per our estimation, 70% of the audiences will answer the survey. Among these responses, it is certain that some of the optional questions are not answered. For categorical answer such as occupation and education background, we will set the non answered field to "other". For numerical column, we will fill the missing value with the sample mean. This is to use the point estimation as the best guess of missing numerical value. We estimate there will be 5% of the missing value for each optional question.
+
+To protect respondent data privacy. We added a tick box question before submission to acquire consent of respondent in participating the survey. If form is completed by respondent and we obtain his/her consent, the data is added to our survey data set anonymously.
+
+# Result analysis
+
+In this section, we describe the questions that have been asked in the survey; whether it's a required response question or optional and the logic behind it; and our findings from the responses to each of the questions been asked.
+
+```{r, echo=FALSE}
+# simulation of survey result
+N=10000
+sid <- seq(N)
+ages_support <- structure(list(Party = c("Liberal", "Conservative", "New democratic", 
+"Block Quebecois", "Green", "Other"), `18-34` = c(0.34, 0.25, 
+0.24, 0.04, 0.07, 0.0599999999999998), `35-54` = c(0.31, 0.33, 
+0.19, 0.07, 0.07, 0.0299999999999998), `55+` = c(0.32, 0.39, 
+0.12, 0.09, 0.05, 0.03)), row.names = c(NA, -6L), class = c("tbl_df", 
+"tbl", "data.frame"))
+ages <- round(exp(rnorm(N, 3.55,0.1)))
+salary <- rnorm(N,50000,10000)
+uniform <- runif(N)
+education <- structure(list(education = c("Elementary/Secondary school", "Bachelor", 
+"Masters", "Doctorate or professional", "Other"), `sample number` = c(7567, 
+11453, 3566, 1458, 956)), row.names = c(NA, -5L), class = c("tbl_df", 
+"tbl", "data.frame"))
+male_ratio <- 98.3/(98.3+100)
+vote_ratio <- 65.95/100
+satisfaction_ratio <- 75/100
+data <- data.frame(survey_id=sid)
+data$age <- ages
+
+data$party <- mapply(function(i,a){
+  if(a<34){
+    ages_support$Party[findInterval(uniform[i],cumsum(ages_support$`18-34`))+1]
+  }else if(a>=34 & a<=54){
+    ages_support$Party[findInterval(uniform[i],cumsum(ages_support$`35-54`))+1]
+  }else{
+    ages_support$Party[findInterval(uniform[i],cumsum(ages_support$`55+`))+1]
+  }
+}, data$survey_id, data$age)
+
+uniform <- runif(N)
+population_cut <- cumsum(population$`Population in 2019`/sum(population$`Population in 2019`))
+data$province <- mapply(function(i,pat){
+  idx <- findInterval(uniform[i], population_cut)+1
+  if (runif(1)>.5 & idx==2 & pat == "Conservative") {
+    idx <- 4
+  }
+  population$Province[idx]
+}, data$survey_id,data$party)
+
+uniform <- runif(N)
+data$gender <- mapply(function(i){
+  if(uniform[i]<0.01){
+    "Other"
+  }else if(uniform[i]>=0.01 & uniform[i]<male_ratio){
+    "man"
+  }else{
+    "woman"
+  }
+}, data$survey_id)
+
+uniform <- runif(N)
+education_cut <- cumsum(education$`sample number`/sum(education$`sample number`))
+data$education <- mapply(function(i){
+  education$education[findInterval(uniform[i], education_cut)+1]
+}, data$survey_id)
+
+uniform <- runif(N)
+data$vote <- mapply(function(i){
+  if(uniform[i]<vote_ratio){
+    "certainly"
+  }else if(uniform[i]>vote_ratio&uniform[i]<0.95){
+    "certainly not"
+  }else {
+    "I'm not sure"
+  }
+}, data$survey_id)
+
+uniform <- runif(N)
+data$satisfied <- mapply(function(i, p){
+  if(uniform[i]<satisfaction_ratio){
+    if(runif(1)>.5 & p=="Conservative")
+    {
+      "No"
+    }else
+    { 
+      "Yes"
+    }
+  }else if(uniform[i]>satisfaction_ratio&uniform[i]<0.99){
+    "No"
+  }else {
+    "Indifferent"
+  }
+  
+     
+}, data$survey_id, data$party)
+
+```
+
+## What is your date of birth? 
+
+It is believed that asking date of birth is an indirect way of asking age with courtesy, and deducing age from the date of birth is very simple. We believe there will be a relationship between the poll result and the age of respondent. That is why this question is marked as required. As we bar plot the age classes against the Party respondent supports. We observed that our Party supporters seem to dominate elder age group. For participants with younger age, often less than 35, tend to support more Liberal Party.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=age)) +
+  geom_histogram(bins=10,position="dodge",aes(fill=party))
+
+```
+
+## What is your gender?
+There might be a correlation between the gender of respondent and its political stand but we are not certain about it. The question is therefore marked as optional. We bar plot the gender of the respondents against the Party respondent supports. It is hard to say whether man or woman is more likely to vote for Conservative Party. However we do notice that Liberal Party is still the favorite one among the respondents regardless the gender. It has been also verified by our sample that Canadian population composed with more women than man.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=gender)) +
+  geom_bar(position="dodge",aes(fill=party))
+
+```
+
+## Where do you from?
+This is the actually the most important question that we set in this survey. We'd like to come up with a conclusion on the support ratio by geographic and it is going to be helpful to align with our campaign strategy. It seems that residents from Alberta are likely to vote for Conservative Party while resident from Ontario and Quebec prefer Liberal. In this case, our leader probably want to pay more interest in Alberta riding other than Ontario or Quebec.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=province)) +
+  geom_bar(position="dodge",aes(fill=party)) +
+  theme(axis.text.x = element_text(angle=-30, hjust=0))
+
+```
+
+## What is your education background?
+Knowing the respondent educational background helps us to classify the audiences and identify which group of people contains most of our supporters. From the bar plot, it is hard to say that the education background would be a significant factor that affects the voting result but we do notice Liberal Party is still the favorite one among most of the education backgrounds. From our sample, it is hard to come with some work class focused campaign strategies.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=education)) +
+  geom_bar(position="dodge",aes(fill=party)) +
+  theme(axis.text.x = element_text(angle=-30, hjust=0))
+
+```
+
+## What is your salary?
+Salary is also a factor that we are interested in. Knowing the correlation between support ratio and salary helps us to define our campaign strategy according to work class. However from the box plot that we conducted, we do not see an obvious pattern between the Party to vote and voter's salary distribution. It is expected as we saw previously there isn't a significant relationship between work class and the supporting Party and salary is somewhat a reflection of the working class.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=party, y=salary)) +
+  geom_boxplot(fill="orange")
+
+```
+
+## Which Party are you likely to vote?
+This is the question that allows us to know exact political stand of the respondent. It is the ultimate conclusion of us launching this survey and we marked it as required response. We can still see that the Liberal Party is at the moment the favorite Party for this election, but our gap between Conservative and Liberal Party support ratio is not huge. This is encouraging for us to work on the campaign strategies for the election this year.
+
+```{r,fig.width=6, fig.height=3, fig.align='center', echo=FALSE }
+ggplot(data, aes(x=party)) +
+  geom_bar(aes(fill=..count..))
+```
+
+## Are you satisfied with the current ruling Party?
+We want to know our supports are choosing to vote for us because they are believing in our Party or simply a response to the dissatisfaction of the current ruling Party. It is also expected that majority of the unhappy voters will vote for Conservative Party instead of the ruling Party in 2019. The below bar plot represents this theory perfectly. We do need to work on getting votes from Canadian people who are not happy with the current leading Party.
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=satisfied)) +
+  geom_bar(position="dodge",aes(fill=party))
+
+```
+
+## Are you going to vote on election day?
+A part of respondent political stand, we'd like to also know how confident participant with his answers to the questions. We notice most of the voters are certain that they will vote on the election day, and there's no big difference between the turn up ratios across different Party. 
+
+```{r, fig.width=6, fig.height=3, fig.align='center', echo=FALSE}
+ggplot(data, aes(x=vote)) +
+  geom_bar(position="dodge",aes(fill=party))
+
+```
+
+# Conclusion
+From this study, we found out two interesting patterns on voter's age and voter's based location. The Conservative Party is obviously more poplar among respondents with age is 35 and above. While we could lose to the Liberal Party on attracting more younger voters, and in riding in the main provinces such as Quebec and Ontario, we are still the preferred Party in the Alberta area. For the remain provinces, we are still competing with the Liberal Party and our gap is very close on those ones. Although we are certain with this finding, the survey methodology and our analysis have some drawback that could be improved in the future. Firstly, we approached the residents by posting through their address registered at the council the survey link, and asking respondents to complete the survey online. Getting survey responses is relatively a slow process comparing to performing a survey directly online. Reaching out residents by post is also an old fashion method that may discourage younger residents to participate the survey. Another drawback on our study is that we haven't conduct any statistical tests that are very crucial to validate an idea. However by doing this we increases the level of statistical knowledge that is required for reader.
+
+
+\newpage
+
+# Appendice (Google form)
+
+![Google form survey](https://jennyjiang0506.github.io/img/01.jpg){height=70%}
+
+![Google form survey](https://jennyjiang0506.github.io/img/02.jpg){height=70%}
+
+![Consent](https://jennyjiang0506.github.io/img/03.jpg)
+
+\newpage
+# References
+
+(Shaughnessy 2020) (Statista, n.d.)
+Shaughnessy, E.; Jeanne, J.; Zechmeister. 2020. Research Methods in Psychology (9th Ed.). New York, NY. Statista. n.d. Statista - Canadian Federal Election Data. https://www.statista.com/.
+
+
